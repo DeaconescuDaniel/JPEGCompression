@@ -1,14 +1,22 @@
 cmake_minimum_required(VERSION 3.28)
-project(Proiect)
+project(JPEG_Compressor)
 
-# --- Find OpenCV
+# Find OpenCV
 find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS} inc)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# --- Define executable
-add_executable(Proiect main.cpp)
+# Source files
+set(SOURCES
+        src/rgbToYCC.cpp
+        src/subsampling.cpp
+        src/dct.cpp
+        src/ImageBlockMatrix.cpp
+        src/ImageBlock.cpp
+)
 
-# --- Link OpenCV libraries
-target_link_libraries(Proiect ${OpenCV_LIBS})
+add_executable(JPEG_Compressor main.cpp ${SOURCES})
+
+# Link OpenCV
+target_link_libraries(JPEG_Compressor ${OpenCV_LIBS})
