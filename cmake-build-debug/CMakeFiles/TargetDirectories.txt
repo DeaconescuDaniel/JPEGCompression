@@ -1,3 +1,0 @@
-C:/Users/bests/OneDrive/Desktop/Facultate/Laburi An III/Semestrul 2/PI/Proiect/cmake-build-debug/CMakeFiles/Proiect.dir
-C:/Users/bests/OneDrive/Desktop/Facultate/Laburi An III/Semestrul 2/PI/Proiect/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/bests/OneDrive/Desktop/Facultate/Laburi An III/Semestrul 2/PI/Proiect/cmake-build-debug/CMakeFiles/rebuild_cache.dir
