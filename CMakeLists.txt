@@ -7,4 +7,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(CMAKE_CXX_STANDARD 17)
 
+# --- Define executable
 add_executable(Proiect main.cpp)
+
+# --- Link OpenCV libraries
+target_link_libraries(Proiect ${OpenCV_LIBS})
