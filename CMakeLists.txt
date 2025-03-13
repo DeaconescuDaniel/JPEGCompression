@@ -14,6 +14,8 @@ set(SOURCES
         src/dct.cpp
         src/ImageBlockMatrix.cpp
         src/ImageBlock.cpp
+        src/yccSubsampled.cpp
+        src/quantization.cpp
 )
 
 add_executable(JPEG_Compressor main.cpp ${SOURCES})

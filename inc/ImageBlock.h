@@ -5,14 +5,19 @@
 #ifndef JPEG_COMPRESSOR_IMAGEBLOCK_H
 #define JPEG_COMPRESSOR_IMAGEBLOCK_H
 
+#include <opencv2/opencv.hpp>
+
+using namespace cv;
 
 struct ImageBlock {
-    unsigned char data[8][8];
+    Mat Y;
+    Mat Cb;
+    Mat Cr;
 
-    ImageBlock();
 
-    ImageBlock &operator=(const ImageBlock &other);
+    ImageBlock(int subsampleRatio);
+
+    ImageBlock& operator=(const ImageBlock& other);
 };
-
 
 #endif //JPEG_COMPRESSOR_IMAGEBLOCK_H
