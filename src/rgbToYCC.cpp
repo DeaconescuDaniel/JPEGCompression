@@ -34,9 +34,9 @@ Mat RGBtoYCC(Mat imgRGB) {
             Vec3b BGR = imgRGB.at<Vec3b>(i, j);
             uchar B = BGR[0], G = BGR[1], R = BGR[2];
 
-            auto Y  = static_cast<uchar>(0.299 * R + 0.587 * G + 0.114 * B);
-            auto Cb = static_cast<uchar>(128 + (-0.168736 * R - 0.331264 * G + 0.5 * B));
-            auto Cr = static_cast<uchar>(128 + (0.5 * R - 0.418688 * G - 0.081312 * B));
+            uchar Y  = static_cast<uchar>(0.299 * R + 0.587 * G + 0.114 * B);
+            uchar Cb = static_cast<uchar>(128 + (-0.168736 * R - 0.331264 * G + 0.5 * B));
+            uchar Cr = static_cast<uchar>(128 + (0.5 * R - 0.418688 * G - 0.081312 * B));
 
             imgYCC.at<Vec3b>(i, j) = Vec3b(Y, Cb, Cr);
         }

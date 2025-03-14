@@ -10,12 +10,11 @@ set(CMAKE_CXX_STANDARD 17)
 # Source files
 set(SOURCES
         src/rgbToYCC.cpp
-        src/subsampling.cpp
         src/dct.cpp
         src/ImageBlockMatrix.cpp
         src/ImageBlock.cpp
-        src/yccSubsampled.cpp
         src/quantization.cpp
+        src/ZigZagVectors.cpp
 )
 
 add_executable(JPEG_Compressor main.cpp ${SOURCES})
