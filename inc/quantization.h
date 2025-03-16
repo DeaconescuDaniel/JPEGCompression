@@ -31,7 +31,4 @@ Mat quantTableCMat = Mat(8,8,CV_32F,quantTableC);
 
 void quantizeBlock(ImageBlock& block);
 
-
-
-
 #endif //JPEG_COMPRESSOR_QUANTIZATION_H

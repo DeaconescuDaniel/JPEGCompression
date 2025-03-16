@@ -1,5 +1,4 @@
 #include "quantization.h"
-#include "ImageBlock.h"
 
 void quantizeBlock(ImageBlock& block)
 {

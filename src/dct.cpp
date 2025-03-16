@@ -12,6 +12,7 @@ ImageBlock discreteCosineTransform(ImageBlock block)
     discreteCosineTransform(block.Y);
     discreteCosineTransform(block.Cb);
     discreteCosineTransform(block.Cr);
+    return block;
 }
 
 void discreteCosineTransform(Mat &block) {
