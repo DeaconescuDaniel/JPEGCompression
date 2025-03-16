@@ -5,6 +5,6 @@
 
 ImageBlock discreteCosineTransform(ImageBlock block);
 
-void discreteCosineTransform(Mat& mat);
+ImageBlock applyDCT(ImageBlock& block);
 
 #endif //JPEG_COMPRESSOR_DCT_H

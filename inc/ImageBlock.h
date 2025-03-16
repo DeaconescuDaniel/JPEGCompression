@@ -6,16 +6,16 @@
 using namespace cv;
 
 struct ImageBlock {
+    ImageBlock(const Mat &luma, const Mat &cb, const Mat &cr);
+
     Mat Y;
     Mat Cb;
     Mat Cr;
 
-    ImageBlock(int subsampleRatio = 2);
+    explicit ImageBlock(int subsampleRatio = 2, int type = CV_8UC1);
 
     ImageBlock& operator=(const ImageBlock& other);
 
-public:
-    int getSubsampleRatio() const;
 };
 
 #endif //JPEG_COMPRESSOR_IMAGEBLOCK_H

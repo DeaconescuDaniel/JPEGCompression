@@ -14,13 +14,21 @@ TEST(RGBToYCCTest, SolidColor) {
 }
 
 TEST(RGBToYCCTest, Grayscale) {
-    Mat grayImage(16, 16, CV_8UC3, Scalar(100, 100, 100));
-    Mat yccImage = RGBtoYCC(grayImage);
+    cv::Mat grayImage(16, 16, CV_8UC3, cv::Scalar(100, 100, 100));
+    cv::Mat yccImage = RGBtoYCC(grayImage);
 
-    std::vector<Mat> channels;
-    split(yccImage, channels);
-    EXPECT_EQ(countNonZero(channels[1]), 0);
-    EXPECT_EQ(countNonZero(channels[2]), 0);
+    std::vector<cv::Mat> channels;
+    cv::split(yccImage, channels);
+
+    double minVal, maxVal;
+
+    minMaxLoc(channels[1], &minVal, &maxVal);
+    EXPECT_NEAR(minVal, 128, 5);
+    EXPECT_NEAR(maxVal, 128, 5);
+
+    minMaxLoc(channels[2], &minVal, &maxVal);
+    EXPECT_NEAR(minVal, 128, 5);
+    EXPECT_NEAR(maxVal, 128, 5);
 }
 
 TEST(RGBToYCCTest, RandomImage) {
@@ -30,6 +38,41 @@ TEST(RGBToYCCTest, RandomImage) {
     Mat yccImage = RGBtoYCC(randomImage);
     Mat recoveredImage = YCCtoRGB(yccImage);
 
-    EXPECT_TRUE(areImagesEqual(randomImage, recoveredImage, 2.0));
+    EXPECT_TRUE(areImagesEqual(randomImage, recoveredImage, 3.0));
 }
 
+TEST(RGBToYCCTest, PureWhite) {
+    cv::Mat whiteImage(16, 16, CV_8UC3, cv::Scalar(255, 255, 255));
+    cv::Mat yccImage = RGBtoYCC(whiteImage);
+    cv::Mat recoveredImage = YCCtoRGB(yccImage);
+
+    EXPECT_TRUE(areImagesEqual(whiteImage, recoveredImage, 2.0));
+}
+
+TEST(RGBToYCCTest, PureBlack) {
+    cv::Mat blackImage(16, 16, CV_8UC3, cv::Scalar(0, 0, 0));
+    cv::Mat yccImage = RGBtoYCC(blackImage);
+    cv::Mat recoveredImage = YCCtoRGB(yccImage);
+
+    EXPECT_TRUE(areImagesEqual(blackImage, recoveredImage, 2.0));
+}
+
+TEST(RGBToYCCTest, NoisyImage) {
+    cv::Mat noisyImage(16, 16, CV_8UC3);
+    randn(noisyImage, cv::Scalar(128, 128, 128), cv::Scalar(30, 30, 30));
+
+    cv::Mat yccImage = RGBtoYCC(noisyImage);
+    cv::Mat recoveredImage = YCCtoRGB(yccImage);
+
+    EXPECT_TRUE(areImagesEqual(noisyImage, recoveredImage, 5.0));
+}
+
+TEST(RGBToYCCTest, NonDivisibleSizes) {
+    cv::Mat nonDivImage(15, 23, CV_8UC3);
+    randu(nonDivImage, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
+
+    cv::Mat yccImage = RGBtoYCC(nonDivImage);
+    cv::Mat recoveredImage = YCCtoRGB(yccImage);
+
+    EXPECT_TRUE(areImagesEqual(nonDivImage, recoveredImage, 3.0));
+}

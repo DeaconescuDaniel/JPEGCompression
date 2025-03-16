@@ -34,6 +34,8 @@ set(TESTS
         test/testQuantization.cpp
         test/testEncoding.cpp
         test/testHelpers.cpp
+        test/inputs.h
+        test/outputs.h
 )
 
 add_executable(JPEG_Compressor main.cpp ${SOURCES})

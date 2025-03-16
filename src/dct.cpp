@@ -1,23 +1,22 @@
 #include "dct.h"
 
-ImageBlock discreteCosineTransform(ImageBlock block)
-{
-    Mat luma  = block.Y;
-    Mat Cb = block.Cb;
-    Mat Cr = block.Cr;
+ImageBlock applyDCT(ImageBlock& block) {
+    block.Y.convertTo(block.Y, CV_32F);
+    block.Cb.convertTo(block.Cb, CV_32F);
+    block.Cr.convertTo(block.Cr, CV_32F);
 
-    cv::resize(block.Cb, block.Cb, cv::Size(8, 8), 0, 0, cv::INTER_LINEAR);
-    cv::resize(block.Cr, block.Cr, cv::Size(8, 8), 0, 0, cv::INTER_LINEAR);
+    block.Y -= 128.0f;
+    block.Cb -= 128.0f;
+    block.Cr -= 128.0f;
 
-    discreteCosineTransform(block.Y);
-    discreteCosineTransform(block.Cb);
-    discreteCosineTransform(block.Cr);
+    Mat resizedCb, resizedCr;
+    resize(block.Cb, resizedCb, Size(8, 8), 0, 0, INTER_LINEAR);
+    resize(block.Cr, resizedCr, Size(8, 8), 0, 0, INTER_LINEAR);
+
+    dct(block.Y, block.Y);
+    dct(resizedCb, block.Cb);
+    dct(resizedCr, block.Cr);
+
     return block;
-}
-
-void discreteCosineTransform(Mat &block) {
-    block.convertTo(block, CV_32F);
-    block -= 128.0f;
-    dct(block, block);
 }
 

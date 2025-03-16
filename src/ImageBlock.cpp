@@ -1,14 +1,19 @@
 #include "ImageBlock.h"
 
-ImageBlock::ImageBlock(int subsampleRatio)
+ImageBlock::ImageBlock(int subsampleRatio, int type)
 {
-    Y = Mat(8, 8, CV_8UC1, Scalar(0));
+    Y = Mat(8, 8, type, Scalar(0));
 
     const int chromaSize = 8 / subsampleRatio;
-    Cb = Mat(chromaSize, chromaSize, CV_8UC1, Scalar(0));
-    Cr = Mat(chromaSize, chromaSize, CV_8UC1, Scalar(0));
+    Cb = Mat(chromaSize, chromaSize, type, Scalar(0));
+    Cr = Mat(chromaSize, chromaSize, type, Scalar(0));
 }
 
+ImageBlock::ImageBlock(const cv::Mat& luma, const cv::Mat& cb, const cv::Mat& cr) {
+    Y = luma.clone();
+    Cb = cb.clone();
+    Cr = cr.clone();
+}
 
 ImageBlock& ImageBlock::operator=(const ImageBlock& other) {
     if (this != &other) {
