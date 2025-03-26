@@ -6,75 +6,83 @@
 
 #include "testHelpers.cpp"
 
-TEST(DCTTest, UniformBlockTest) {
-    ImageBlock block(2, CV_32F);
-    block.Y = Mat::ones(8, 8, CV_32F) * 128;
-    block.Cb = Mat::ones(4, 4, CV_32F) * 100;
-    block.Cr = Mat::ones(4, 4, CV_32F) * 150;
-
-    ImageBlock transformedBlock = applyDCT(block);
-
-    // Check that only the top-left (DC) coefficient is nonzero
-    EXPECT_NEAR(transformedBlock.Y.at<float>(0, 0), 1024, 1e-5);
-    EXPECT_NEAR(transformedBlock.Cb.at<float>(0, 0), 400, 1e-5);
-    EXPECT_NEAR(transformedBlock.Cr.at<float>(0, 0), 600, 1e-5);
-
-    // Ensure all other values are close to zero
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (i == 0 && j == 0) continue;
-            EXPECT_NEAR(transformedBlock.Y.at<float>(i, j), 0, 1e-5);
-            }
-    }
-}
-
-TEST(DCTTest, ValidateDCTOutput) {
-    // Convert input and expected matrices to OpenCV Mat format
-    Mat expectedDCTMat(8, 8, CV_32F, dctOutput_1);
+void validateDCTOutput(const float input[8][8], const float expectedOutput[8][8], const std::string& testName) {
+    Mat expectedDCTMat(8, 8, CV_32F, (void*)expectedOutput);
 
     ImageBlock block;
-    block.Y = Mat(8, 8, CV_32F, dctInput_1);
-    block.Cb = Mat::zeros(4,4,CV_32F);
-    block.Cr = Mat::zeros(4,4,CV_32F);
+    block.Y = Mat(8, 8, CV_32F, (void*)input).clone();
+    block.Cb = Mat::zeros(4, 4, CV_32F);
+    block.Cr = Mat::zeros(4, 4, CV_32F);
 
     applyDCT(block);
 
-    // Compare results
-    EXPECT_TRUE(areImagesEqual(block.Y, expectedDCTMat,1.0)) << "DCT output does not match expected values!";
+    EXPECT_TRUE(areImagesEqual<float>(block.Y, expectedDCTMat, 1.0))
+                        << "DCT output does not match expected values for test: " << testName;
 }
 
+void testDCTAndQuantization(const float input[8][8], const float expectedOutput[8][8], const char expectedQuantization[8][8], const std::string& testName) {
+    Mat expectedDCTMat(8, 8, CV_32F, (void*)expectedOutput);
+    Mat expectedQuantMat(8, 8, CV_8S, (void*)expectedQuantization);
+    ImageBlock block;
+    block.Y = Mat(8,8,CV_32F,(void*)input).clone();
+    block.Cb = Mat::zeros(4, 4, CV_32F);
+    block.Cr = Mat::zeros(4, 4, CV_32F);
+
+    applyDCT(block);
+
+    EXPECT_TRUE(areImagesEqual<float>(block.Y, expectedDCTMat, 1.0))
+                        << testName << " - DCT output does not match expected values!";
+
+    quantizeBlock(block);
+
+    EXPECT_TRUE(areImagesEqual<char>(block.Y, expectedQuantMat, 1.0))
+                        << testName << " - Quantization output does not match expected values!";
+}
+
+
+
 TEST(DCTTest, ValidateDCTOnAllChannels) {
-    // Generate random 8×8 luma (Y) and 4×4 chroma (Cb, Cr) matrices
     Mat inputY  = generateRandomMatrix(8, 8,CV_32F);
     Mat inputCb = generateRandomMatrix(4, 4, CV_32F);
     Mat inputCr = generateRandomMatrix(4, 4, CV_32F);
 
     ImageBlock block(inputY,inputCb,inputCr);
 
-    // Compute expected DCT results using OpenCV
-    Mat expectedY  = inputY.clone() -128;
-    Mat expectedCb = inputCb.clone() -128;
-    Mat expectedCr = inputCr.clone() -128;
+    Mat expectedY, expectedCb, expectedCr;
+    resize(inputCb, inputCb,Size(8,8), 0,0,INTER_LINEAR);
+    resize(inputCr, inputCr,Size(8,8), 0,0,INTER_LINEAR);
 
-    dct(expectedY, expectedY);
-    dct(expectedY, expectedCb);
-    dct(expectedY, expectedCr);
+    inputY -= 128.0f;
+    inputCb -= 128.0f;
+    inputCr -= 128.0f;
+
+    dct(inputY, expectedY);
+    dct(inputCb, expectedCb);
+    dct(inputCr, expectedCr);
 
     applyDCT(block);
 
-    // Validate Y channel
-    EXPECT_TRUE(areImagesEqual(block.Y, expectedY, 1e-3))
-                        << "DCT output for Y channel does not match expected values!";
+    EXPECT_TRUE(areImagesEqual<float>(block.Y, expectedY, 1e-3));
+    EXPECT_TRUE(areImagesEqual<float>(block.Cb, expectedCb, 1e-3));
+    EXPECT_TRUE(areImagesEqual<float>(block.Cr, expectedCr, 1e-3));
+}
 
-    // Validate Cb channel
-    EXPECT_TRUE(areImagesEqual(block.Cb, expectedCb, 1e-3))
-                        << "DCT output for Cb channel does not match expected values!";
+TEST(DCTTest, ValidateDCTOutput_1) {
+    validateDCTOutput(dctInput_1, dctOutput_1, "Test Case 1");
+}
 
-    printImage(block.Cb);
-    std::cout << "-----------"<<std::endl;
-    printImage(expectedCb);
+TEST(DCTTest, ValidateDCTOutput_2) {
+    validateDCTOutput(dctInput_2, dctOutput_2, "Test Case 2");
+}
 
-    // Validate Cr channel
-    EXPECT_TRUE(areImagesEqual(block.Cr, expectedCr, 1e-3))
-                        << "DCT output for Cr channel does not match expected values!";
+TEST(DCTTest,ValidateDCT_Output_3) {
+    validateDCTOutput(dctInput_3,dctOutput_3,"Test Case 3");
+}
+
+TEST(DCTTest,ValidateDCT_Output_4) {
+    testDCTAndQuantization(quantizedDctInput_1,dctOutput_4,quantizedDctOutput_1,"Quantization Test Case 1");
+}
+
+TEST(DCTTest,ValidateDCT_Output_5) {
+    testDCTAndQuantization(quantizedDctInput_2,dctOutput_5,quantizedDctOutput_2,"Quantization Test Case 1");
 }

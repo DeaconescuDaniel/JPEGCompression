@@ -8,13 +8,14 @@ inline Mat generateRandomMatrix(int rows, int cols, int type) {
     return mat;
 }
 
-inline void printImage(const Mat& img){
+template <typename T>
+inline void printImage(const Mat& img) {
     for (int i = 0; i < img.rows; i++) {
         for (int j = 0; j < img.cols; j++) {
             if (img.channels() == 1) {
-                std::cout << static_cast<int>(img.at<float>(i, j)) << " ";
+                std::cout << static_cast<int>(img.at<T>(i, j)) << " ";
             } else if (img.channels() == 3) {
-                Vec3b pixel = img.at<Vec3b>(i, j);
+                Vec<T, 3> pixel = img.at<Vec<T, 3>>(i, j);
                 std::cout << "("
                           << static_cast<int>(pixel[0]) << ","
                           << static_cast<int>(pixel[1]) << ","
@@ -26,6 +27,8 @@ inline void printImage(const Mat& img){
     std::cout << std::endl;
 }
 
+
+template <typename T>
 inline bool areImagesEqual(const Mat& img1, const Mat& img2, double epsilon = 1.0) {
     assert(img1.size() == img2.size() && img1.type() == img2.type());
 
@@ -34,17 +37,19 @@ inline bool areImagesEqual(const Mat& img1, const Mat& img2, double epsilon = 1.
 
     if (diff.channels() != 1) {
         std::vector<Mat> channels;
-        split(diff,channels);
-        for(const auto & channel : channels)
-        {
-            if(countNonZero(channel > epsilon) != 0)
-            {
+        split(diff, channels);
+        for (const auto& channel : channels) {
+            if (countNonZero(channel > epsilon) != 0) {
                 std::cout << "Difference not within tolerance!" << std::endl;
-                printImage(channel);
+                printImage<T>(channel);
                 return false;
             }
         }
         return true;
+    }
+
+    if (countNonZero(diff > epsilon) != 0) {
+        printImage<T>(diff);
     }
 
     return countNonZero(diff > epsilon) == 0;

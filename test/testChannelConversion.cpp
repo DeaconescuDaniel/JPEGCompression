@@ -10,7 +10,7 @@ TEST(RGBToYCCTest, SolidColor) {
     Mat yccImage = RGBtoYCC(blueImage);
     Mat recoveredImage = YCCtoRGB(yccImage);
 
-    EXPECT_TRUE(areImagesEqual(blueImage, recoveredImage));
+    EXPECT_TRUE(areImagesEqual<uchar>(blueImage, recoveredImage));
 }
 
 TEST(RGBToYCCTest, Grayscale) {
@@ -38,7 +38,7 @@ TEST(RGBToYCCTest, RandomImage) {
     Mat yccImage = RGBtoYCC(randomImage);
     Mat recoveredImage = YCCtoRGB(yccImage);
 
-    EXPECT_TRUE(areImagesEqual(randomImage, recoveredImage, 3.0));
+    EXPECT_TRUE(areImagesEqual<uchar>(randomImage, recoveredImage, 3.0));
 }
 
 TEST(RGBToYCCTest, PureWhite) {
@@ -46,7 +46,7 @@ TEST(RGBToYCCTest, PureWhite) {
     cv::Mat yccImage = RGBtoYCC(whiteImage);
     cv::Mat recoveredImage = YCCtoRGB(yccImage);
 
-    EXPECT_TRUE(areImagesEqual(whiteImage, recoveredImage, 2.0));
+    EXPECT_TRUE(areImagesEqual<uchar>(whiteImage, recoveredImage, 2.0));
 }
 
 TEST(RGBToYCCTest, PureBlack) {
@@ -54,7 +54,7 @@ TEST(RGBToYCCTest, PureBlack) {
     cv::Mat yccImage = RGBtoYCC(blackImage);
     cv::Mat recoveredImage = YCCtoRGB(yccImage);
 
-    EXPECT_TRUE(areImagesEqual(blackImage, recoveredImage, 2.0));
+    EXPECT_TRUE(areImagesEqual<uchar>(blackImage, recoveredImage, 2.0));
 }
 
 TEST(RGBToYCCTest, NoisyImage) {
@@ -64,7 +64,7 @@ TEST(RGBToYCCTest, NoisyImage) {
     cv::Mat yccImage = RGBtoYCC(noisyImage);
     cv::Mat recoveredImage = YCCtoRGB(yccImage);
 
-    EXPECT_TRUE(areImagesEqual(noisyImage, recoveredImage, 5.0));
+    EXPECT_TRUE(areImagesEqual<uchar>(noisyImage, recoveredImage, 5.0));
 }
 
 TEST(RGBToYCCTest, NonDivisibleSizes) {
@@ -72,7 +72,7 @@ TEST(RGBToYCCTest, NonDivisibleSizes) {
     randu(nonDivImage, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
 
     cv::Mat yccImage = RGBtoYCC(nonDivImage);
-    cv::Mat recoveredImage = YCCtoRGB(yccImage);
+    cv::Mat recoveredImage = YCCtoRGB(yccImage);    // ingrid<3
 
-    EXPECT_TRUE(areImagesEqual(nonDivImage, recoveredImage, 3.0));
+    EXPECT_TRUE(areImagesEqual<uchar>(nonDivImage, recoveredImage, 3.0));
 }

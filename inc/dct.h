@@ -7,4 +7,6 @@ ImageBlock discreteCosineTransform(ImageBlock block);
 
 ImageBlock applyDCT(ImageBlock& block);
 
+void quantizeBlock(ImageBlock& block);
+
 #endif //JPEG_COMPRESSOR_DCT_H

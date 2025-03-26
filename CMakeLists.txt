@@ -16,7 +16,6 @@ set(SOURCES
         src/dct.cpp
         src/ImageBlockMatrix.cpp
         src/ImageBlock.cpp
-        src/quantization.cpp
         src/ZigZagVectors.cpp
 )
 
@@ -26,7 +25,6 @@ set(TESTS
         src/dct.cpp
         src/ImageBlockMatrix.cpp
         src/ImageBlock.cpp
-        src/quantization.cpp
         src/ZigZagVectors.cpp
         test/testChannelConversion.cpp
         test/testImageBlocks.cpp

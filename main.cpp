@@ -28,7 +28,7 @@ void compressJPG(Mat image)
 
 int main() {
     // Load image and convert to YCC
-    Mat img = imread("..\\test\\images\\Lena_24bits.bmp", IMREAD_COLOR);
+    Mat img = imread(R"(..\test\images\Lena_24bits.bmp)", IMREAD_COLOR);
     if (img.empty()) {
         cout << "Error: Image not found!" << endl;
         return -1;
