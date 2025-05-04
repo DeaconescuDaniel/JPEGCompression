@@ -17,6 +17,7 @@ set(SOURCES
         src/ImageBlockMatrix.cpp
         src/ImageBlock.cpp
         src/ZigZagVectors.cpp
+        src/huffman.cpp
 )
 
 set(TESTS

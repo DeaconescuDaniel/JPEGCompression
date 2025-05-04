@@ -2,24 +2,25 @@
 
 using namespace cv;
 
-ImageBlockMatrix::ImageBlockMatrix(const int rows, const int cols, int subsampleRatio)
-        : m_rows(rows), m_cols(cols), m_subsampleRatio(subsampleRatio), m_blockMatrix(rows * cols, ImageBlock(subsampleRatio)) {}
+ImageBlockMatrix::ImageBlockMatrix(const int rows, const int cols)
+        : m_rows(rows), m_cols(cols),
+          m_blockMatrix(rows * cols) {}
 
 ImageBlock ImageBlockMatrix::getBlockAt(const int rowIndex, const int colIndex) const {
     if (rowIndex < 0 || rowIndex >= m_rows || colIndex < 0 || colIndex >= m_cols) {
         throw std::out_of_range("Block index out of bounds");
     }
-    return m_blockMatrix[rowIndex * m_rows + colIndex];
+    return m_blockMatrix[rowIndex * m_cols + colIndex];
 }
 
 void ImageBlockMatrix::setBlockAt(const int rowIndex, const int colIndex, const ImageBlock& block) {
     if (rowIndex < 0 || rowIndex >= m_rows || colIndex < 0 || colIndex >= m_cols) {
         throw std::out_of_range("Block index out of bounds");
     }
-    m_blockMatrix[rowIndex * m_rows + colIndex] = block;
+    m_blockMatrix[rowIndex * m_cols + colIndex] = block;
 }
 
-ImageBlockMatrix::ImageBlockMatrix(const Mat& img, int subsampleRatio) : m_subsampleRatio(subsampleRatio) {
+ImageBlockMatrix::ImageBlockMatrix(const Mat& img) {
     assert(img.channels() == 3);
 
     int paddedWidth = (img.cols % 8 == 0) ? img.cols : img.cols + (8 - img.cols % 8);
@@ -34,22 +35,15 @@ ImageBlockMatrix::ImageBlockMatrix(const Mat& img, int subsampleRatio) : m_subsa
 
     m_rows = paddedHeight / 8;
     m_cols = paddedWidth / 8;
-    m_blockMatrix.resize(m_rows * m_cols, ImageBlock(subsampleRatio));
-
-    int chromaSize = 8 / subsampleRatio;
-
-    Mat CbSubsampled, CrSubsampled;
-    resize(Cb, CbSubsampled, Size(paddedWidth / subsampleRatio, paddedHeight / subsampleRatio), 0, 0, INTER_LINEAR);
-    resize(Cr, CrSubsampled, Size(paddedWidth / subsampleRatio, paddedHeight / subsampleRatio), 0, 0, INTER_LINEAR);
+    m_blockMatrix.resize(m_rows * m_cols);
 
     for (int i = 0; i < m_rows; i++) {
         for (int j = 0; j < m_cols; j++) {
-            ImageBlock& block = m_blockMatrix[i * m_rows + j];
+            ImageBlock& block = m_blockMatrix[i * m_cols + j];
 
-            block.Y = Y(Rect(i * 8, j * 8, 8, 8)).clone();
-
-            block.Cb = CbSubsampled(Rect(i * chromaSize, j * chromaSize, chromaSize, chromaSize)).clone();
-            block.Cr = CrSubsampled(Rect(i * chromaSize, j * chromaSize, chromaSize, chromaSize)).clone();
+            block.Y = Y(Rect(j * 8, i * 8, 8, 8)).clone();
+            block.Cb = Cb(Rect(j * 8, i * 8, 8, 8)).clone();
+            block.Cr = Cr(Rect(j * 8, i * 8, 8, 8)).clone();
         }
     }
 }
@@ -60,26 +54,21 @@ Mat ImageBlockMatrix::reconstructImage(ImageBlockMatrix blockMatrix) const {
     int chromaSize = blockMatrix.m_blockMatrix[0].Cb.rows;
 
     Mat Y(height, width, CV_8UC1);
-    Mat Cb(height / m_subsampleRatio, width / m_subsampleRatio, CV_8UC1);
-    Mat Cr(height / m_subsampleRatio, width / m_subsampleRatio, CV_8UC1);
-
+    Mat Cb(height, width, CV_8UC1);
+    Mat Cr(height, width, CV_8UC1);
 
     for (int i = 0; i < blockMatrix.getRows(); i++) {
         for (int j = 0; j < blockMatrix.getCols(); j++) {
-            const ImageBlock& block = blockMatrix.getBlockAt(i,j);
+            const ImageBlock& block = blockMatrix.getBlockAt(i, j);
 
-            block.Y.copyTo(Y(Rect(i * 8, j * 8, 8, 8)));
+            block.Y.copyTo(Y(Rect(j * 8, i * 8, 8, 8)));
             block.Cb.copyTo(Cb(Rect(j * chromaSize, i * chromaSize, chromaSize, chromaSize)));
             block.Cr.copyTo(Cr(Rect(j * chromaSize, i * chromaSize, chromaSize, chromaSize)));
         }
     }
 
-    Mat CbUpsampled, CrUpsampled;
-    resize(Cb, CbUpsampled, Size(width, height), 0, 0, INTER_LINEAR);
-    resize(Cr, CrUpsampled, Size(width, height), 0, 0, INTER_LINEAR);
-
     Mat reconstructedImage;
-    std::vector<Mat> channels = {Y, CbUpsampled, CrUpsampled};
+    std::vector<Mat> channels = {Y, Cb, Cr};
     merge(channels, reconstructedImage);
 
     return reconstructedImage;
@@ -92,4 +81,3 @@ int ImageBlockMatrix::getCols() const {
 int ImageBlockMatrix::getRows() const {
     return m_rows;
 }
-

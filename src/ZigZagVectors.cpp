@@ -2,52 +2,78 @@
 #include "ImageBlock.h"
 
 #include <utility>
+#include <cassert>
 
-ZigZagVectors::ZigZagVectors(vector<float> vectorY, vector<float> vectorCb, vector<float> vectorCr) :
-    vectorY(std::move(vectorY)), vectorCb(std::move(vectorCb)), vectorCr(std::move(vectorCr)) {};
-
-
-RunLengthZigZagVectors::RunLengthZigZagVectors(const ZigZagVectors& inVectors) {
-    vectorY = encodeVector(inVectors.vectorY);
-    vectorCb = encodeVector(inVectors.vectorCb);
-    vectorCr = encodeVector(inVectors.vectorCr);
-}
-
-vector<pair<unsigned int, float>> RunLengthZigZagVectors::encodeVector(const vector<float>& inputVector) {
-    assert(!inputVector.empty());
-
-    float currentKey = inputVector[0];
-    unsigned int currentLength = 1;
-    vector<pair<unsigned int, float>> output;
-
-    for (size_t i = 1; i < inputVector.size(); i++) {
-        if (inputVector[i] != currentKey) {
-            output.emplace_back(currentLength, currentKey);
-            currentKey = inputVector[i];
-            currentLength = 1;
-        } else {
-            currentLength++;
-        }
-    }
-
-    output.emplace_back(currentLength, currentKey);
-    return output;
-}
-
-ZigZagVectors zigzagScan(const ImageBlock &block) {
-    vector<float> vectorY(64);
-    vector<float> vectorCb(64);
-    vector<float> vectorCr(64);
+ZigZagVectors::ZigZagVectors(const ImageBlock &block) {
+    vector<char> tempY(64), tempCb(64), tempCr(64);
 
     for (int i = 0; i < 64; i++) {
         int row = zigZagScanIndex[i] / 8;
         int col = zigZagScanIndex[i] % 8;
-        vectorY[i] = block.Y.at<float>(row, col);
-        vectorY[i] = block.Cb.at<float>(row, col);
-        vectorY[i] = block.Cr.at<float>(row, col);
+        tempY[i] = block.Y.at<char>(row, col);
+        tempCb[i] = block.Cb.at<char>(row, col);
+        tempCr[i] = block.Cr.at<char>(row, col);
     }
-    return ZigZagVectors(vectorY,vectorCb,vectorCr);
+
+    // First element is DC
+    dcY = tempY[0];
+    dcCb = tempCb[0];
+    dcCr = tempCr[0];
+
+    // Rest are AC
+    vector<char> acYInput(tempY.begin() + 1, tempY.end());
+    vector<char> acCbInput(tempCb.begin() + 1, tempCb.end());
+    vector<char> acCrInput(tempCr.begin() + 1, tempCr.end());
+
+    acY = encodeAC(acYInput);
+    acCb = encodeAC(acCbInput);
+    acCr = encodeAC(acCrInput);
 }
 
-RunLengthZigZagVectors::RunLengthZigZagVectors() : vectorY(), vectorCb(), vectorCr() {}
+vector<pair<unsigned int, char>> ZigZagVectors::encodeAC(const vector<char>& inputVector) {
+    assert(!inputVector.empty());
 
+    vector<pair<unsigned int, char>> output;
+
+    if (inputVector.empty()) {
+        return output;
+    }
+
+    char currentVal = inputVector[0];
+    unsigned int run = 1;  // We've already seen the first element
+
+    for (size_t i = 1; i < inputVector.size(); ++i) {
+        if (inputVector[i] == currentVal && run < 15) {
+            // If the current value is the same as the previous and run is < 15, continue counting the run
+            run++;
+        } else {
+            if (currentVal != 0) {
+                // If the current value is not zero, store the run
+                output.emplace_back(run, currentVal);
+            } else {
+                // Handle runs of zeros (skip adding to the output and add EOB after a long sequence of zeros)
+                if (run > 0) {
+                    // If we encounter a sequence of zeros, we do not add the zero values directly.
+                    // Instead, we'll eventually add an EOB marker after a certain run-length limit.
+                    if (run >= 16) {
+                        // If we encounter 16 zeros, add the EOB marker to signal the end of the block
+                        output.emplace_back(0, 0);  // EOB marker, which can be handled in your Huffman encoding
+                    }
+                }
+            }
+            // Now move to the next element
+            currentVal = inputVector[i];
+            run = 1;
+        }
+    }
+
+    // Handle the last run after finishing the loop
+    if (currentVal != 0) {
+        output.emplace_back(run, currentVal);
+    } else if (run >= 16) {
+        // If the final run is a large sequence of zeros, add EOB after 16 zeros
+        output.emplace_back(0, 0);  // EOB marker
+    }
+
+    return output;
+}
