@@ -8,8 +8,8 @@
 #include <string>
 
 
-std::string encodeStandardDCDifference(int diff, bool isC);
-std::string encodeStandardAC(int run, int size, bool isC, int value);
+std::string encodeStandardDCDifference(int diff);
+std::string encodeStandardAC(int run, int size, int value);
 
 
 #endif //JPEG_COMPRESSOR_HUFFMAN_H

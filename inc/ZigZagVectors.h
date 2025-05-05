@@ -2,7 +2,6 @@
 #define JPEG_COMPRESSOR_ZIGZAGVECTORS_H
 
 #include <opencv2/opencv.hpp>
-#include "ImageBlock.h"
 
 using namespace cv;
 using namespace std;
@@ -20,14 +19,9 @@ const int zigZagScanIndex[64] = {
 
 struct ZigZagVectors {
     int8_t dcY;
-    int8_t dcCb;
-    int8_t dcCr;
-
     vector<pair<unsigned int, char>> acY;
-    vector<pair<unsigned int, char>> acCb;
-    vector<pair<unsigned int, char>> acCr;
 
-    explicit ZigZagVectors(const ImageBlock &block);
+    explicit ZigZagVectors(const Mat &block);
     static vector<pair<unsigned int, char>> encodeAC(const vector<char>& acInput);
 };
 

@@ -1,33 +1,24 @@
 #include "ZigZagVectors.h"
-#include "ImageBlock.h"
 
 #include <utility>
 #include <cassert>
 
-ZigZagVectors::ZigZagVectors(const ImageBlock &block) {
-    vector<char> tempY(64), tempCb(64), tempCr(64);
+ZigZagVectors::ZigZagVectors(const Mat &block) {
+    vector<char> tempY(64);
 
     for (int i = 0; i < 64; i++) {
         int row = zigZagScanIndex[i] / 8;
         int col = zigZagScanIndex[i] % 8;
-        tempY[i] = block.Y.at<char>(row, col);
-        tempCb[i] = block.Cb.at<char>(row, col);
-        tempCr[i] = block.Cr.at<char>(row, col);
+        tempY[i] = block.at<char>(row, col);
     }
 
     // First element is DC
     dcY = tempY[0];
-    dcCb = tempCb[0];
-    dcCr = tempCr[0];
 
     // Rest are AC
     vector<char> acYInput(tempY.begin() + 1, tempY.end());
-    vector<char> acCbInput(tempCb.begin() + 1, tempCb.end());
-    vector<char> acCrInput(tempCr.begin() + 1, tempCr.end());
 
     acY = encodeAC(acYInput);
-    acCb = encodeAC(acCbInput);
-    acCr = encodeAC(acCrInput);
 }
 
 vector<pair<unsigned int, char>> ZigZagVectors::encodeAC(const vector<char>& inputVector) {

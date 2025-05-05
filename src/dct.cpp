@@ -23,56 +23,19 @@ float quantTableY[64] = {
 Mat quantTableYMat = Mat(8,8,CV_32F,quantTableY);
 
 
-float quantTableC[64] = {
-        3,  3,  3,  4,  3,  4,  8,  4,  4,  8, 16, 11,  9, 11, 16, 16,
-        16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-        16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-        16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
-};
+Mat applyDCT(Mat& block) {
+    block.convertTo(block, CV_32F);
 
-//float quantTableC[64] = {
-//        10, 8, 9, 9, 9, 8, 10, 9,
-//        9, 9, 10, 10, 10, 11, 12, 17,
-//        13, 12, 12, 12, 12, 20, 16, 16,
-//        14, 17, 18, 20, 23, 23, 22, 20,
-//        25, 25, 25, 25, 25, 25, 25, 25,
-//        25, 25, 25, 25, 25, 25, 25, 25,
-//        25, 25, 25, 25, 25, 25, 25, 25,
-//        25, 25, 25, 25, 25, 25, 25, 25};
-Mat quantTableCMat = Mat(8,8,CV_32F,quantTableC);
+    block -= 128.0f;
 
 
-ImageBlock applyDCT(ImageBlock& block) {
-    block.Y.convertTo(block.Y, CV_32F);
-    block.Cb.convertTo(block.Cb, CV_32F);
-    block.Cr.convertTo(block.Cr, CV_32F);
-
-    block.Y -= 128.0f;
-
-    Mat resizedCb, resizedCr;
-    resize(block.Cb, resizedCb, Size(8, 8), 0, 0, INTER_LINEAR);
-    resize(block.Cr, resizedCr, Size(8, 8), 0, 0, INTER_LINEAR);
-
-    resizedCb -= 128.0f;
-    resizedCr -= 128.0f;
-
-    dct(block.Y, block.Y);
-    dct(resizedCb, block.Cb);
-    dct(resizedCr, block.Cr);
+    dct(block, block);
 
     return block;
 }
 
-void quantizeBlock(ImageBlock& block) {
-    block.Y  /= quantTableYMat;
-    block.Cb /= quantTableCMat;
-    block.Cr /= quantTableCMat;
-
-    block.Y  = block.Y + 0.5f;
-    block.Cb = block.Cb + 0.5f;
-    block.Cr = block.Cr + 0.5f;
-
-    block.Y.convertTo(block.Y, CV_8S);
-    block.Cb.convertTo(block.Cb, CV_8S);
-    block.Cr.convertTo(block.Cr, CV_8S);
+void quantizeBlock(Mat& block) {
+    block  /= quantTableYMat;
+    block  = block + 0.5f;
+    block.convertTo(block, CV_8S);
 }

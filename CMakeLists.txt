@@ -12,23 +12,18 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Source files
 set(SOURCES
-        src/rgbToYCC.cpp
         src/dct.cpp
         src/ImageBlockMatrix.cpp
-        src/ImageBlock.cpp
         src/ZigZagVectors.cpp
         src/huffman.cpp
 )
 
 set(TESTS
         test/allTests.cpp
-        src/rgbToYCC.cpp
         src/dct.cpp
         src/ImageBlockMatrix.cpp
-        src/ImageBlock.cpp
         src/ZigZagVectors.cpp
         test/testChannelConversion.cpp
-        test/testImageBlocks.cpp
         test/testDCT.cpp
         test/testQuantization.cpp
         test/testEncoding.cpp

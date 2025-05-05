@@ -1,10 +1,13 @@
 #ifndef JPEG_COMPRESSOR_DCT_H
 #define JPEG_COMPRESSOR_DCT_H
 
-#include "ImageBlock.h"
-ImageBlock applyDCT(ImageBlock& block);
+#include <opencv2/opencv.hpp>
 
-void quantizeBlock(ImageBlock& block);
+using namespace cv;
+
+Mat applyDCT(Mat& block);
+
+void quantizeBlock(Mat& block);
 
 
 #endif //JPEG_COMPRESSOR_DCT_H
