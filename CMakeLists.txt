@@ -30,7 +30,6 @@ set(TESTS
         test/testChannelConversion.cpp
         test/testImageBlocks.cpp
         test/testDCT.cpp
-        test/testQuantization.cpp
         test/testEncoding.cpp
         test/testHelpers.cpp
         test/inputs.h

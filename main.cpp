@@ -35,10 +35,7 @@ std::vector<uint8_t> packBits(const std::string& bitStream) {
     return packed;
 }
 
-void writeJPEGFile(const std::string& filename,
-                   const std::string& bitstreamY,
-                   const std::string& bitstreamC,
-                   int height,int width) {
+void writeJPEGFile(const std::string& filename,const std::string& bitstream, int height,int width) {
 
     std::ofstream out(filename, std::ios::binary);
     auto writeMarker = [&](uint8_t marker1, uint8_t marker2) {
@@ -193,8 +190,7 @@ void writeJPEGFile(const std::string& filename,
         }
     };
 
-    writeBitstream(bitstreamY);
-    writeBitstream(bitstreamC);
+    writeBitstream(bitstream);
 
     // --- End of Image ---
     writeMarker(0xFF, 0xD9); // EOI
@@ -204,13 +200,12 @@ void writeJPEGFile(const std::string& filename,
 }
 
 
-void compressJPG(Mat image) {
+void compressJPG(const Mat& image) {
     assert(image.channels() == 3);
 
     Mat yccImage = RGBtoYCC(image);
     ImageBlockMatrix blockMatrix(yccImage);
 
-    // Step 1: Apply DCT and Quantization
     for (int i = 0; i < blockMatrix.getRows(); i++) {
         for (int j = 0; j < blockMatrix.getCols(); j++) {
             ImageBlock block = blockMatrix.getBlockAt(i, j);
@@ -220,77 +215,56 @@ void compressJPG(Mat image) {
         }
     }
 
-    std::vector<int8_t> dcYList, dcCList;
-    std::vector<std::vector<std::pair<unsigned int, char>>> acYList, acCList;
-
+    std::string bitstream;
+    int8_t prevDCY = 0, prevDCCb = 0, prevDCCr = 0;
     for (int i = 0; i < blockMatrix.getRows(); i++) {
         for (int j = 0; j < blockMatrix.getCols(); j++) {
             ImageBlock block = blockMatrix.getBlockAt(i, j);
             ZigZagVectors encoded(block);
 
-            dcYList.push_back(encoded.dcY);
-            dcCList.push_back(encoded.dcCb);
-            dcCList.push_back(encoded.dcCr);
+            // --- Y ---
+            // Y DC
+            int diffY = encoded.dcY - prevDCY;
+            bitstream += encodeStandardDCDifference(diffY, false);
+            prevDCY = encoded.dcY;
 
-            acYList.push_back(encoded.acY);
-            acCList.push_back(encoded.acCb);
-            acCList.push_back(encoded.acCr);
+            // Y AC
+            for (auto [runY, valueY] : encoded.acY) {
+                int sizeY = (valueY == 0) ? 0 : static_cast<int>(std::log2(std::abs(valueY))) + 1;
+                bitstream += encodeStandardAC(runY, sizeY, false, valueY);
+            }
+
+            // --- Cb  ---
+            // Cb DC
+            int diffCb = encoded.dcCb - prevDCCb;
+            bitstream += encodeStandardDCDifference(diffCb, true);
+            prevDCCb = encoded.dcCb;
+
+            // Cb AC
+            for (auto [runCb, valueCb] : encoded.acCb) {
+                int sizeCb = (valueCb == 0) ? 0 : static_cast<int>(std::log2(std::abs(valueCb))) + 1;
+                bitstream += encodeStandardAC(runCb, sizeCb, true, valueCb);
+            }
+
+            // --- Cr ---
+            // Cr DC
+            int diffCr = encoded.dcCr - prevDCCr;
+            bitstream += encodeStandardDCDifference(diffCr, true);
+            prevDCCr = encoded.dcCr;
+
+            // Cr AC
+            for (auto [runCr, valueCr] : encoded.acCr) {
+                int sizeCr = (valueCr == 0) ? 0 : static_cast<int>(std::log2(std::abs(valueCr))) + 1;
+                bitstream += encodeStandardAC(runCr, sizeCr, true, valueCr);
+            }
         }
     }
 
-    std::string bitstreamY, bitstreamC;
-    int prevDCY = 0, prevDCCb = 0, prevDCCr = 0;
+    std::vector<uint8_t> packed = packBits(bitstream);
+    std::cout << "Bitstream Length: " << bitstream.size() << " bits\n";
 
-    for (int i = 0; i < dcYList.size(); ++i) {
-        int diffY = dcYList[i] - prevDCY;
-        bitstreamY += encodeStandardDCDifference(diffY, false);  // Luminance
-        prevDCY = dcYList[i];
-    }
-
-    for (int i = 0; i < dcCList.size(); i += 2) {
-        int diffCb = dcCList[i] - prevDCCb;
-        int diffCr = dcCList[i + 1] - prevDCCr;
-
-        bitstreamC += encodeStandardDCDifference(diffCb, true);  // Chrominance Cb
-        bitstreamC += encodeStandardDCDifference(diffCr, true);  // Chrominance Cr
-
-        prevDCCb = dcCList[i];
-        prevDCCr = dcCList[i + 1];
-    }
-
-    for (int i = 0; i < acYList.size(); ++i) {
-        const auto& blockAC = acYList[i];
-
-        for (const auto& [run, value] : blockAC) {
-            int size = (value == 0) ? 0 : static_cast<int>(std::log2(std::abs(value))) + 1;
-            bitstreamY += encodeStandardAC(run, size, false, value);  // Luminance AC
-        }
-    }
-
-    for (int i = 0; i < acCList.size(); ++i) {
-        const auto& blockAC = acCList[i];
-
-        for (const auto& [run, value] : blockAC) {
-            int size = (value == 0) ? 0 : static_cast<int>(std::log2(std::abs(value))) + 1;
-            bitstreamC += encodeStandardAC(run, size, true, value);  // Chrominance AC
-        }
-    }
-
-    auto printBitstream = [](const std::string& stream, const std::string& label) {
-        std::vector<uint8_t> packed = packBits(stream);
-        std::cout << label << ": ";
-        for (uint8_t byte : packed) printf("%02X ", byte);
-        std::cout << std::endl;
-    };
-
-    printBitstream(bitstreamY,  "Y");
-    printBitstream(bitstreamC, "C");
-
-    std::cout << "Total Bitstream Length: "
-              << bitstreamY.size() + bitstreamC.size()
-              << " bits\n";
-
-    writeJPEGFile("output.jpg", bitstreamY, bitstreamC,image.rows,image.cols);
+    // Write to file
+    writeJPEGFile("output.jpg", bitstream, image.rows, image.cols);
 }
 
 

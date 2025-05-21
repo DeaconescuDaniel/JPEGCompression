@@ -367,36 +367,40 @@ std::map<std::pair<int, int>, std::string> acChrominanceCodes = {
 };
 
 
-std::string encodeStandardAC(int run, int size, bool isC, int value) {
+std::string encodeStandardAC(unsigned int run, int size, bool isC, int value) {
     const std::map<std::pair<int, int>, std::string>& huffmanTable = isC ? acChrominanceCodes : acLuminanceCodes;
 
-    // Step 1: Handle End-of-Block (EOB) marker
-    if (run == 0 && value == 0) {
-        // EOB marker, which is a special case in the Huffman table
-        return huffmanTable.at({0, 0}); // The EOB marker is the first entry: (0, 0) -> "1010"
+    // EOB case (run=0, size=0)
+    if (run == 0 && value == 0 && size == 0) {
+        return huffmanTable.at({0, 0});  // RS = 0x00
     }
 
-    // Step 2: Search for the (run, size) pair in the Huffman table
+    // (ZRL)
+    if (run == 15 && size == 0 && value == 0) {
+        return huffmanTable.at({15, 0});  // RS = 0xF0
+    }
+
+    // RS = (run << 4) | size
     auto it = huffmanTable.find({run, size});
     if (it == huffmanTable.end()) {
-        throw std::invalid_argument("No Huffman code found for the given (run, size) pair");
+        throw std::invalid_argument("No Huffman code found for (run, size)");
     }
 
-    std::string huffmanCode = it->second;
+    std::string huffCode = it->second;
 
+    // Append VLI (variable-length integer) for non-zero values
     if (size > 0) {
-        std::bitset<16> bits(std::abs(value));
-        std::string bin = bits.to_string().substr(16 - size);
-
+        int magnitude = value;
         if (value < 0) {
-            // Apply two's complement for negative values
-            for (char& c : bin) c = (c == '1') ? '0' : '1';
+            magnitude = value + (1 << size) - 1;
         }
 
-        huffmanCode += bin;
+        std::bitset<16> bits(magnitude);
+        std::string additionalBits = bits.to_string().substr(16 - size);
+        huffCode += additionalBits;
     }
 
-    return huffmanCode;
+    return huffCode;
 }
 
 
@@ -404,17 +408,21 @@ std::string encodeStandardDCDifference(int diff, bool isC) {
     int category = (diff == 0) ? 0 : static_cast<int>(std::log2(std::abs(diff))) + 1;
 
     const std::string* huffCodes = isC ? dcChrominanceCodes : dcLuminanceCodes;
-    std::string result = huffCodes[category];
+    std::string huffCode = huffCodes[category];
 
     if (category > 0) {
-        int magnitude = std::abs(diff);
-        std::bitset<16> bits(magnitude);
-        std::string bin = bits.to_string().substr(16 - category);
+        int numBits = category;
+        int v = diff;
+
+        // Generate VLI: if diff >= 0, v = diff; else v = diff + (2^numBits - 1) + 1
         if (diff < 0) {
-            for (char& c : bin) c = (c == '1') ? '0' : '1';
+            v = diff + (1 << numBits) - 1;
         }
-        result += bin;
+
+        std::bitset<16> bits(v);
+        std::string additionalBits = bits.to_string().substr(16 - numBits);
+        huffCode += additionalBits;
     }
 
-    return result;
+    return huffCode;
 }

@@ -48,17 +48,12 @@ ImageBlock applyDCT(ImageBlock& block) {
     block.Cr.convertTo(block.Cr, CV_32F);
 
     block.Y -= 128.0f;
-
-    Mat resizedCb, resizedCr;
-    resize(block.Cb, resizedCb, Size(8, 8), 0, 0, INTER_LINEAR);
-    resize(block.Cr, resizedCr, Size(8, 8), 0, 0, INTER_LINEAR);
-
-    resizedCb -= 128.0f;
-    resizedCr -= 128.0f;
+    block.Cb -= 128.0f;
+    block.Cr -= 128.0f;
 
     dct(block.Y, block.Y);
-    dct(resizedCb, block.Cb);
-    dct(resizedCr, block.Cr);
+    dct(block.Cb, block.Cb);
+    dct(block.Cr, block.Cr);
 
     return block;
 }
@@ -67,10 +62,6 @@ void quantizeBlock(ImageBlock& block) {
     block.Y  /= quantTableYMat;
     block.Cb /= quantTableCMat;
     block.Cr /= quantTableCMat;
-
-    block.Y  = block.Y + 0.5f;
-    block.Cb = block.Cb + 0.5f;
-    block.Cr = block.Cr + 0.5f;
 
     block.Y.convertTo(block.Y, CV_8S);
     block.Cb.convertTo(block.Cb, CV_8S);

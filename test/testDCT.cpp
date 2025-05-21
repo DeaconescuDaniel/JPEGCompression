@@ -25,8 +25,8 @@ void testDCTAndQuantization(const float input[8][8], const float expectedOutput[
     Mat expectedQuantMat(8, 8, CV_8S, (void*)expectedQuantization);
     ImageBlock block;
     block.Y = Mat(8,8,CV_32F,(void*)input).clone();
-    block.Cb = Mat::zeros(4, 4, CV_32F);
-    block.Cr = Mat::zeros(4, 4, CV_32F);
+    block.Cb = Mat::zeros(8, 8, CV_32F);
+    block.Cr = Mat::zeros(8, 8, CV_32F);
 
     applyDCT(block);
 
@@ -43,8 +43,8 @@ void testDCTAndQuantization(const float input[8][8], const float expectedOutput[
 
 TEST(DCTTest, ValidateDCTOnAllChannels) {
     Mat inputY  = generateRandomMatrix(8, 8,CV_32F);
-    Mat inputCb = generateRandomMatrix(4, 4, CV_32F);
-    Mat inputCr = generateRandomMatrix(4, 4, CV_32F);
+    Mat inputCb = generateRandomMatrix(8, 8, CV_32F);
+    Mat inputCr = generateRandomMatrix(8, 8, CV_32F);
 
     ImageBlock block(inputY,inputCb,inputCr);
 
