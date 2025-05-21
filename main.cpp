@@ -192,8 +192,10 @@ void compressJPG(Mat image) {
             // --- Encode AC ---
 
             // Y AC
-            for (const auto& [run, value] : encoded.acY) {
-                int size = (value == 0) ? 0 : static_cast<int>(std::log2(std::abs(value))) + 1;
+            for (const auto& [runSize, value] : encoded.acY) {
+                unsigned char run = runSize.first;
+                unsigned char size = runSize.second;
+
                 bitstream += encodeStandardAC(run, size, value);
             }
 

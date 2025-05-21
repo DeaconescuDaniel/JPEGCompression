@@ -19,10 +19,10 @@ const int zigZagScanIndex[64] = {
 
 struct ZigZagVectors {
     int8_t dcY;
-    vector<pair<unsigned int, char>> acY;
+    std::vector<std::pair<std::pair<unsigned char, unsigned char>, short>> acY;
 
     explicit ZigZagVectors(const Mat &block);
-    static vector<pair<unsigned int, char>> encodeAC(const vector<char>& acInput);
+    vector<pair<pair<unsigned char, unsigned char>, short>> encodeAC(const vector<char>& inputVector);
 };
 
 

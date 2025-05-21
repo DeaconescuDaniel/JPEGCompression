@@ -189,10 +189,8 @@ std::map<std::pair<int, int>, std::string> acCodes = {
 
 std::string encodeStandardAC(int run, int size, int value) {
 
-    // Step 1: Handle End-of-Block (EOB) marker
     if (run == 0 && value == 0) {
-        // EOB marker, which is a special case in the Huffman table
-        return acCodes.at({0, 0}); // The EOB marker is the first entry: (0, 0) -> "1010"
+        return acCodes.at({0, 0});
     }
 
     // Step 2: Search for the (run, size) pair in the Huffman table
