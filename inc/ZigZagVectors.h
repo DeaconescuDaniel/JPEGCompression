@@ -23,12 +23,12 @@ struct ZigZagVectors {
     int8_t dcCb;
     int8_t dcCr;
 
-    vector<pair<unsigned int, char>> acY;
-    vector<pair<unsigned int, char>> acCb;
-    vector<pair<unsigned int, char>> acCr;
+    vector<pair<pair<unsigned char, unsigned char>, short>> acY;
+    vector<pair<pair<unsigned char, unsigned char>, short>> acCb;
+    vector<pair<pair<unsigned char, unsigned char>, short>> acCr;
 
     explicit ZigZagVectors(const ImageBlock &block);
-    static vector<pair<unsigned int, char>> encodeAC(const vector<char>& acInput);
+    vector<pair<pair<unsigned char, unsigned char>, short>> encodeAC(const vector<char> &inputVector);
 };
 
 

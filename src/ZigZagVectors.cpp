@@ -31,41 +31,36 @@ ZigZagVectors::ZigZagVectors(const ImageBlock &block) {
 }
 
 
-vector<pair<unsigned int, char>> ZigZagVectors::encodeAC(const vector<char>& inputVector) {
-    assert(!inputVector.empty());
+vector<pair<pair<unsigned char, unsigned char>, short>> ZigZagVectors::encodeAC(const vector<char> &inputVector) {
+    assert(inputVector.size() == 63);  // AC coefficients: should be 63 after the DC value
 
-    vector<pair<unsigned int, char>> output;
+    vector<pair<pair<unsigned char, unsigned char>, short>> output;
     int zeroRun = 0;
 
     for (size_t i = 0; i < inputVector.size(); ++i) {
-        char val = inputVector[i];
+        short val = inputVector[i];
 
         if (val == 0) {
             zeroRun++;
         } else {
-            // Handle long runs of zeros by inserting multiple (15, 0)
+            // Emit ZRL (15, 0) as needed
             while (zeroRun >= 16) {
-                output.emplace_back(15, 0);
+                output.emplace_back(make_pair(15, 0), 0);  // JPEG ZRL
                 zeroRun -= 16;
             }
 
-            // If there are remaining zeros, emit them with the current value
-            if (zeroRun > 0) {
-                output.emplace_back(zeroRun, val);
-                zeroRun = 0;
-            } else {
-                // If no preceding zeros, the run length for the non-zero value should be zero
-                output.emplace_back(0, val);
-            }
+            // SIZE = number of bits needed to represent the value
+            unsigned char size = (val == std::numeric_limits<short>::min()) ? 15 : (unsigned char)(log2(abs(val)) + 1);
+
+            // Emit (RUNLENGTH, SIZE) : VALUE
+            output.emplace_back(make_pair(zeroRun, size), val);
+            zeroRun = 0;
         }
     }
 
-    // If the last coefficients are all zero, emit an EOB
-    if (!output.empty() && output.back().second != 0) {
-        output.emplace_back(0, 0); // EOB
-    } else if (output.empty()) {
-        // All zeros, so emit only EOB
-        output.emplace_back(0, 0);
+    // If trailing zeros, emit EOB
+    if (zeroRun > 0) {
+        output.emplace_back(make_pair(0, 0), 0);  // EOB
     }
 
     return output;

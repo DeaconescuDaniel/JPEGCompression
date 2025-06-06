@@ -229,9 +229,11 @@ void compressJPG(const Mat& image) {
             prevDCY = encoded.dcY;
 
             // Y AC
-            for (auto [runY, valueY] : encoded.acY) {
-                int sizeY = (valueY == 0) ? 0 : static_cast<int>(std::log2(std::abs(valueY))) + 1;
-                bitstream += encodeStandardAC(runY, sizeY, false, valueY);
+            for (const auto& [runSize, value] : encoded.acY) {
+                unsigned char run = runSize.first;
+                unsigned char size = runSize.second;
+
+                bitstream += encodeStandardAC(run, size, false, value);
             }
 
             // --- Cb  ---
@@ -242,8 +244,10 @@ void compressJPG(const Mat& image) {
 
             // Cb AC
             for (auto [runCb, valueCb] : encoded.acCb) {
-                int sizeCb = (valueCb == 0) ? 0 : static_cast<int>(std::log2(std::abs(valueCb))) + 1;
-                bitstream += encodeStandardAC(runCb, sizeCb, true, valueCb);
+                unsigned char run = runCb.first;
+                unsigned char size = runCb.second;
+
+                bitstream += encodeStandardAC(run, size, true, valueCb);
             }
 
             // --- Cr ---
@@ -254,8 +258,10 @@ void compressJPG(const Mat& image) {
 
             // Cr AC
             for (auto [runCr, valueCr] : encoded.acCr) {
-                int sizeCr = (valueCr == 0) ? 0 : static_cast<int>(std::log2(std::abs(valueCr))) + 1;
-                bitstream += encodeStandardAC(runCr, sizeCr, true, valueCr);
+                unsigned char run = runCr.first;
+                unsigned char size = runCr.second;
+
+                bitstream += encodeStandardAC(run, size, true, valueCr);
             }
         }
     }
